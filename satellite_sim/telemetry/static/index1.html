@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Satellite Simulator</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <style>
+    body { margin: 0; padding: 0; background:#111; color:white; text-align:center; }
+    #chart { width:80%; margin:auto; height:500px; }
+    button { margin-top: 20px; padding: 10px 20px; background:#ffd700; color:#111; border:none; border-radius:5px; cursor:pointer; }
+    button:hover { background:#d4af37; }
+  </style>
+</head>
+<body>
+  <h2>🛰 Satellite Collision Orbit Live Simulation</h2>
+  <div id="chart"></div>
+
+  <script>
+    // Initialize the 3D plot with default telemetry
+    async function initPlot() {
+      const telemetry = await fetchDefaultTelemetry();
+      const xs = telemetry.map(p => p[0]);
+      const ys = telemetry.map(p => p[1]);
+      const zs = telemetry.map(p => p[2]);
+
+      Plotly.newPlot('chart', [{
+        x: xs,
+        y: ys,
+        z: zs,
+        mode: 'lines+markers',
+        type: 'scatter3d',
+        marker: { size: 4, color: 'gold' },
+        line: { width: 2 }
+      }], {
+        title: 'Satellite Orbit',
+        paper_bgcolor:'#111',
+        scene:{ xaxis:{color:'#fff'}, yaxis:{color:'#fff'}, zaxis:{color:'#fff'} }
+      });
+
+      // Start live update every 8 seconds
+      setInterval(() => {
+        simulateLive(1, generateDummyTelemetry());
+      }, 8000);
+    }
+
+    // Fetch default telemetry from backend
+    async function fetchDefaultTelemetry() {
+      try {
+        const resp = await fetch('/default_animation');
+        const data = await resp.json();
+        return data.telemetry || generateDummyTelemetry();
+      } catch(e) {
+        console.warn('Could not fetch default telemetry, using dummy data.');
+        return generateDummyTelemetry();
+      }
+    }
+
+    // Update telemetry in the plot
+    function updateTelemetry(newTelemetry) {
+      const xs = newTelemetry.map(p => p[0]);
+      const ys = newTelemetry.map(p => p[1]);
+      const zs = newTelemetry.map(p => p[2]);
+
+      Plotly.react('chart', [{
+        x: xs,
+        y: ys,
+        z: zs,
+        mode: 'lines+markers',
+        type: 'scatter3d',
+        marker: { size: 4, color: 'gold' },
+        line: { width: 2 }
+      }], {
+        paper_bgcolor:'#111',
+        scene:{ xaxis:{color:'#fff'}, yaxis:{color:'#fff'}, zaxis:{color:'#fff'} }
+      });
+    }
+
+    // Simulate live telemetry (calls backend)
+    async function simulateLive(studentId, telemetryValues) {
+      try {
+        const resp = await fetch('/simulate/live', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ student_id: studentId, telemetry_values: telemetryValues, plot:false })
+        });
+        const data = await resp.json();
+        if(data.telemetry) {
+          updateTelemetry(data.telemetry);
+        } else {
+          updateTelemetry(telemetryValues); // fallback if backend fails
+        }
+      } catch(e) {
+        console.warn('Backend fetch failed, using dummy telemetry.');
+        updateTelemetry(telemetryValues);
+      }
+    }
+
+    // Generate dummy telemetry for simulation
+    function generateDummyTelemetry() {
+      return Array.from({length: 50}, (_, i) => [
+        (Math.cos(i*0.1) + Math.random()*0.05).toFixed(2),
+        (Math.sin(i*0.1) + Math.random()*0.05).toFixed(2),
+        (0.1*Math.sin(2*i*0.1) + Math.random()*0.02).toFixed(2)
+      ]).map(v => v.map(Number));
+    }
+
+    window.onload = initPlot;
+  </script>
+</body>
+</html>
