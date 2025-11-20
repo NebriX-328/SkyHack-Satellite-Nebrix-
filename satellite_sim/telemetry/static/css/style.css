@@ -1,1 +1,81 @@
+@import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600&display=swap");
+
+  * { margin:0; padding:0; box-sizing:border-box; font-family: 'Rajdhani', sans-serif; }
+html,body { height:100%; }
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: black;
+  color: #fff;
+  overflow-x: hidden;
+}
+
+/* ===== BACKGROUND VIDEO ===== */
+#bg-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+  opacity: 0.4; /* dim the video slightly for readability */
+}
+
+/* ===== DASHBOARD GRID ===== */
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  padding: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== TRANSPARENT CARDS ===== */
+
+/* Header */
+header {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  background: linear-gradient(180deg, rgba(0,0,0,0.25), transparent);
+  color: #aee9ff;
+  text-align: center;
+}
+
+header h1 { font-weight:600; color:#9feaff; font-size:1.05rem; letter-spacing:0.4px; }
+header p { color:#b9dce6; font-size:0.85rem; margin-top:6px; }
+
+/* Layout */
+.dashboard { padding: 20px; display:flex; flex-direction:column; gap:18px; max-width:1200px; margin:0 auto; }
+
+.grid { display:grid; gap:14px; }
+.two-col { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+
+/* small meta text */
+.meta { color:#bcdce6; font-size:0.88rem; margin-top:8px; }
+
+/* statuses */
+.ok { color:#7fffd4; font-weight:600; }
+.warn { color:#ffb86b; font-weight:600; }
+
+/* large card */
+.large { grid-column: 0.25 / -0.25; }
+
+/* telemetry chart */
+#telemetryChart { width:60%; height:120px; display:block; }
+
+/* Orbit canvas styling */
+#orbitCanvas { width:100%; height:180px; border-radius:6px; background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent); display:block; }
+
+/* Anomalies list */
+.anomaly-list { margin-top:8px; list-style:none; padding-left:0; }
+.anomaly-list li { padding:8px 10px; border-radius:6px; background: rgba(255,100,100,0.06); color:#ffd9d9; margin-top:8px; font-size:0.92rem; }
+
+/* responsive tweaks */
+@media (max-width:720px) {
+  header h1 { font-size:0.98rem; }
+  .dashboard { padding:12px; gap:12px; }
+}
 
