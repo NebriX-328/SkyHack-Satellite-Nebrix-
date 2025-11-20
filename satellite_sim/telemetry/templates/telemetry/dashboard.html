@@ -1,0 +1,416 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+</head>
+<body>
+
+  <!-- Background Video -->
+   <video autoplay muted loop id="bg-video">
+  <source src="{% static 'images/background.mp4' %}" type="video/mp4"/>
+</video>
+  <div class="overlay"></div>
+
+  <header>
+    <h1>🛰️ Satellite Health Monitoring System - Suomi NPP missions(Earth's climate, weather, and environmental changes)</h1>
+    <p>AI-Integrated Real-Time Telemetry & Orbit Status</p>
+  </header>
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600&display=swap");
+
+  * { margin:0; padding:0; box-sizing:border-box; font-family: 'Rajdhani', sans-serif; }
+html,body { height:100%; }
+
+body {
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+  background: black;
+  color: #fff;
+  overflow-x: hidden;
+}
+
+/* ===== BACKGROUND VIDEO ===== */
+#bg-video {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -2;
+  opacity: 0.4; /* dim the video slightly for readability */
+}
+
+/* ===== DASHBOARD GRID ===== */
+.dashboard {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+  padding: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== TRANSPARENT CARDS ===== */
+
+/* Header */
+header {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  background: linear-gradient(180deg, rgba(0,0,0,0.25), transparent);
+  color: #aee9ff;
+  text-align: center;
+}
+
+header h1 { font-weight:600; color:#9feaff; font-size:1.05rem; letter-spacing:0.4px; }
+header p { color:#b9dce6; font-size:0.85rem; margin-top:6px; }
+
+/* Layout */
+.dashboard { padding: 20px; display:flex; flex-direction:column; gap:18px; max-width:1200px; margin:0 auto; }
+
+.grid { display:grid; gap:14px; }
+.two-col { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+
+/* small meta text */
+.meta { color:#bcdce6; font-size:0.88rem; margin-top:8px; }
+
+/* statuses */
+.ok { color:#7fffd4; font-weight:600; }
+.warn { color:#ffb86b; font-weight:600; }
+
+/* large card */
+.large { grid-column: 0.25 / -0.25; }
+
+/* telemetry chart */
+#telemetryChart { width:60%; height:120px; display:block; }
+
+/* Orbit canvas styling */
+#orbitCanvas { width:100%; height:180px; border-radius:6px; background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent); display:block; }
+
+/* Anomalies list */
+.anomaly-list { margin-top:8px; list-style:none; padding-left:0; }
+.anomaly-list li { padding:8px 10px; border-radius:6px; background: rgba(255,100,100,0.06); color:#ffd9d9; margin-top:8px; font-size:0.92rem; }
+
+/* responsive tweaks */
+@media (max-width:720px) {
+  header h1 { font-size:0.98rem; }
+  .dashboard { padding:12px; gap:12px; }
+}
+  </style>
+
+  <main class="dashboard">
+    <!-- Core Parameters (must update every 10s) -->
+    <section class="grid two-col">
+      <div class="card">
+        <h2>⚙️ Core Parameters</h2>
+        <p>Temperature: <strong id="temp">23.36</strong> °C</p>
+        <p>Battery: <strong id="batteryV">3.75</strong> V</p>
+        <p>Solar Power: <strong id="solar">109.58</strong> W</p>
+        <p>Radiation: <strong id="radiation">--</strong> µGy/h</p>
+        <p>Communication: <strong id="comm">Stable</strong></p>
+      </div>
+
+      <div class="card">
+        <h2>💠 Health Overview</h2>
+        <p><strong>Health Remaining:</strong></p>
+        <h3 id="healthRemain">2 years 134 days</h3>
+
+        <p class="meta">Battery degradation: <span id="batteryDeg">126</span> hours</p>
+        <p class="meta">Impact on ocean monitoring: <span id="impact">Nominal</span></p>
+      </div>
+    </section>
+
+    <!-- Orbit / Motion -->
+    <section class="grid two-col">
+      <div class="card">
+        <h2>🌍 Orbit & Motion</h2>
+        <p>Altitude: <strong id="altitude">450</strong>km</p>
+        <p>Latitude: <strong id="latitude">45.65</strong>°</p>
+        <p>Longitude: <strong id="longitude">-102.32</strong>°</p>
+        <p>Speed: <strong id="speed">9</strong> km/s</p>
+        <p>Orientation: <strong id="orient">29</strong>°</p>
+      </div>
+
+      <div class="card">
+        <h2>🧩 Subsystems Status</h2>
+        <p>📷 Camera: <span class="ok">Operational</span></p>
+        <p>📡 Communication: <span id="commStatus" class="ok">Operational</span></p>
+        <p>🔋 Power: <span class="warn" id="powerPct">78% Battery</span></p>
+        <p>🛰️ Sensors: <span class="ok">All Active</span></p>
+
+        <hr style="margin:10px 0;opacity:0.06" />
+
+        <h3>🚨 Collision / Debris</h3>
+        <p id="debrisStatus" class="ok">✅ No debris detected nearby</p>
+      </div>
+    </section>
+
+    <!-- Graphs -->
+    <section class="telemetryChart">
+      <h2>📊 System Graphs & Charts</h2>
+      <canvas id="telemetryChart"></canvas>
+    </section>
+
+    <!-- Anomalies -->
+    <section class="card">
+      <h2>⚠️ Anomaly Alerts</h2>
+      <div id="anomalies">
+        <p>No anomalies detected.</p>
+        <ul id="anomalyList" class="anomaly-list">
+          <!-- dynamic anomaly items inserted here -->
+        </ul>
+      </div>
+    </section>
+
+    <!-- Orbit canvas (visual) -->
+    <section class="card">
+      <h2>Orbit Visualization</h2>
+      <canvas id="orbitCanvas"></canvas>
+      <p style="font-size:0.85rem;color:#9fb8c9;margin-top:6px">
+        Simple 2D orbit preview — updates with lat/long every 10s
+      </p>
+    </section>
+  </main>
+
+  <!-- Libraries -->
+  <script>
+    // ---------------------------
+// Satellite Dashboard Enhanced
+// ---------------------------
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  // ✅ Random helper functions
+  function randFloat(min, max, fixed = 2) {
+    return +(Math.random() * (max - min) + min).toFixed(fixed);
+  }
+  function randChoice(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  // ✅ HTML elements
+  const tempEl = document.getElementById("temp");
+  const batteryEl = document.getElementById("batteryV");
+  const solarEl = document.getElementById("solar");
+  const radEl = document.getElementById("radiation");
+  const commEl = document.getElementById("comm");
+  const powerPctEl = document.getElementById("powerPct");
+  const altitudeEl = document.getElementById("altitude");
+  const latEl = document.getElementById("latitude");
+  const lonEl = document.getElementById("longitude");
+  const speedEl = document.getElementById("speed");
+  const orientEl = document.getElementById("orient");
+  const batteryDegEl = document.getElementById("batteryDeg");
+  const impactEl = document.getElementById("impact");
+  const anomalyListEl = document.getElementById("anomalyList");
+  const debrisEl = document.getElementById("debrisStatus");
+
+  // ✅ Check Chart.js availability
+  if (typeof Chart === "undefined") {
+    console.error("❌ Chart.js is not loaded! Please include it in your HTML before this script.");
+    return;
+  }
+
+  // ✅ Telemetry Chart setup
+  const ctx = document.getElementById("telemetryChart").getContext("2d");
+  const telemetryChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: Array(20).fill(""),
+      datasets: [
+        {
+          label: "Battery (V)",
+          data: Array(20).fill(3.75),
+          borderColor: "#00eaff",
+          backgroundColor: "rgba(0,234,255,0.2)",
+          tension: 0.3,
+        },
+        {
+          label: "Temperature (°C)",
+          data: Array(20).fill(23.36),
+          borderColor: "#ffaa00",
+          backgroundColor: "rgba(255,170,0,0.2)",
+          tension: 0.3,
+        },
+        {
+          label: "Solar Power (W)",
+          data: Array(20).fill(109.58),
+          borderColor: "#adff2f",
+          backgroundColor: "rgba(173,255,47,0.2)",
+          tension: 0.3,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      animation: { duration: 0 },
+      scales: {
+        x: { display: false },
+        y: { grid: { color: "rgba(255,255,255,0.1)" }, ticks: { color: "#ccc" } },
+      },
+      plugins: {
+        legend: { labels: { color: "#fff", font: { size: 12 } } },
+      },
+    },
+  });
+
+  // ✅ Core parameters update (10s cadence)
+  function updateCore() {
+    const temp = randFloat(18.5, 26.5);
+    const batt = randFloat(3.4, 4.05);
+    const solar = randFloat(50, 220);
+    const rad = Math.random() < 0.08 ? "--" : randFloat(0.01, 12.5);
+    const comm = randChoice(["Stable", "Stable", "Fluctuating", "Degraded"]);
+
+    tempEl.textContent = temp;
+    batteryEl.textContent = batt;
+    solarEl.textContent = solar;
+    radEl.textContent = rad;
+    commEl.textContent = comm;
+    powerPctEl.textContent = `${Math.round(((batt - 3.3) / (4.2 - 3.3)) * 100)}% Battery`;
+
+    // Update chart data
+    const datasets = telemetryChart.data.datasets;
+    datasets[0].data.push(batt); datasets[0].data.shift();
+    datasets[1].data.push(temp); datasets[1].data.shift();
+    datasets[2].data.push(solar); datasets[2].data.shift();
+    telemetryChart.update();
+  }
+
+  updateCore();
+  setInterval(updateCore, 10000);
+
+  // ✅ Orbit / motion update (every 10s)
+  function updateOrbit() {
+    const alt = randFloat(350, 420, 2);
+    const lat = randFloat(-85, 85, 5);
+    const lon = randFloat(-180, 180, 5);
+    const speed = randFloat(7.5, 7.8, 3);
+    const orient = randFloat(0, 360, 1);
+
+    altitudeEl.textContent = alt;
+    latEl.textContent = lat;
+    lonEl.textContent = lon;
+    speedEl.textContent = speed;
+    orientEl.textContent = orient;
+    batteryDegEl.textContent = `${Math.round(randFloat(1200, 3000, 0))}`;
+    impactEl.textContent = randChoice(["Nominal", "Minor", "Moderate", "High"]);
+  }
+
+  updateOrbit();
+  setInterval(updateOrbit, 10000);
+
+  // ✅ Orbit Canvas Visualization
+  const orbitCanvas = document.getElementById("orbitCanvas");
+  const octx = orbitCanvas.getContext("2d");
+  let orbitAngle = 0;
+
+  function resizeOrbit() {
+    orbitCanvas.width = orbitCanvas.clientWidth * devicePixelRatio;
+    orbitCanvas.height = orbitCanvas.clientHeight * devicePixelRatio;
+    octx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  }
+  window.addEventListener("resize", resizeOrbit);
+  resizeOrbit();
+
+  function drawOrbit(lat = 0, lon = 0, alt = 400) {
+    const w = orbitCanvas.clientWidth;
+    const h = orbitCanvas.clientHeight;
+    octx.clearRect(0, 0, w, h);
+    const cx = w / 2, cy = h / 2;
+    const rx = w * 0.38, ry = h * 0.28;
+
+    // Orbit ellipse
+    octx.beginPath();
+    octx.ellipse(cx, cy, rx, ry, 0, 0, 2 * Math.PI);
+    octx.strokeStyle = "rgba(159,234,255,0.15)";
+    octx.lineWidth = 1.8;
+    octx.stroke();
+
+    // Earth
+    octx.beginPath();
+    octx.arc(cx, cy, 12, 0, 2 * Math.PI);
+    octx.fillStyle = "rgba(20,100,200,0.95)";
+    octx.fill();
+
+    // Satellite
+    const satX = cx + rx * Math.cos(orbitAngle);
+    const satY = cy + ry * Math.sin(orbitAngle);
+    octx.beginPath();
+    octx.arc(satX, satY, 6, 0, 2 * Math.PI);
+    octx.fillStyle = "#fff";
+    octx.fill();
+
+    // Altitude ring
+    const altFactor = Math.max(0.35, Math.min(1.0, (420 - Math.min(420, alt)) / 120 + 0.35));
+    octx.beginPath();
+    octx.arc(satX, satY, 10 + altFactor * 8, 0, 2 * Math.PI);
+    octx.strokeStyle = `rgba(255,160,90,${0.28 + 0.4 * (1 - altFactor)})`;
+    octx.lineWidth = 2;
+    octx.stroke();
+
+    // Info label
+    octx.font = "11px monospace";
+    octx.fillStyle = "#dbeff6";
+    octx.fillText(`Lat:${lat.toFixed(2)} Lon:${lon.toFixed(2)}`, Math.min(w - 160, satX + 12), Math.max(14, satY - 6));
+  }
+
+  function animateOrbit() {
+    orbitAngle += 0.0001;
+    if (orbitAngle > 2 * Math.PI) orbitAngle -= 2 * Math.PI;
+    const lat = Math.sin(orbitAngle) * 45;
+    const lon = Math.cos(orbitAngle) * 180;
+    const alt = 380 + Math.sin(orbitAngle * 2) * 20;
+    drawOrbit(lat, lon, alt);
+    requestAnimationFrame(animateOrbit);
+  }
+  animateOrbit();
+
+  // ✅ Anomalies & Debris
+  function updateAnomalies() {
+    anomalyListEl.innerHTML = "";
+    const anomalyChance = Math.random();
+    if (anomalyChance < 0.12) {
+      const anomalies = [
+        `Low battery voltage: ${randFloat(3.30, 3.55)} V`,
+        `Thermal spike: ${randFloat(55, 95)} °C`,
+        `Comm packet loss spike: ${randFloat(2, 12)}%`,
+        `Sensor drift detected`,
+        `Unexpected attitude oscillation detected`,
+      ];
+      const pickCount = anomalyChance < 0.04 ? 2 : 1;
+      for (let i = 0; i < pickCount; i++) {
+        const li = document.createElement("li");
+        li.textContent = anomalies[Math.floor(Math.random() * anomalies.length)];
+        anomalyListEl.appendChild(li);
+      }
+      document.querySelector("#anomalies > p")?.remove();
+    } else {
+      if (!document.querySelector("#anomalies > p")) {
+        const p = document.createElement("p");
+        p.textContent = "No anomalies detected.";
+        document.getElementById("anomalies").prepend(p);
+      }
+    }
+
+    const debris = Math.random() < 0.08;
+    if (debris) {
+      debrisEl.textContent = "⚠️ Potential object detected — Closest approach ~ 4.2 km";
+      debrisEl.style.color = "#ffd6a5";
+    } else {
+      debrisEl.textContent = "✅ No debris detected nearby";
+      debrisEl.style.color = "#a0ffa0";
+    }
+  }
+
+  updateAnomalies();
+  setInterval(updateAnomalies, 10000);
+
+});
+
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</body>
+</html>

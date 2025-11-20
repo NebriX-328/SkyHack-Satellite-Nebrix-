@@ -1,0 +1,389 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satellite Simulator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ===== GLOBAL ===== */
+@import url("https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600&display=swap");
+
+  * { margin:0; padding:0; box-sizing:border-box; font-family: 'Rajdhani', sans-serif; }
+html,body { height:100%; }
+
+body {
+  margin: 0;
+  background: black;
+  color: #fff;
+  overflow-x: hidden;
+}
+  
+  /* ===== CONTAINER ===== */
+  .container { padding:2rem; max-width:1200px; margin:0 auto; }
+  h1 { font-size:2rem; text-align:center; margin-bottom:1rem; color:#00eaff; text-shadow:0 0 10px #00eaff; }
+  p { font-size:1rem; text-align:center; margin-bottom:2rem; color:#ccc; }
+
+  /* ===== UPLOAD BUTTON ===== */
+  .upload-container {
+    display:flex; justify-content:center; margin-bottom:2rem;
+    gap:1rem; flex-wrap:wrap;
+  }
+  input[type=file] { padding:0.5rem; border-radius:6px; background:rgba(255,255,255,0.05); color:#fff; border:none; cursor:pointer; }
+  button { padding:0.6rem 1.2rem; border:none; border-radius:6px; cursor:pointer; background:#00eaff; color:#000; font-weight:600; transition:0.3s; }
+  button:hover { background:#00b7cc; }
+
+  /* ===== OUTPUT CARDS ===== */
+  .output { display:grid; grid-template-columns: repeat(auto-fit, minmax(250px,1fr)); gap:1rem; margin-bottom:2rem; }
+  .card {
+    background: rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.1);
+    border-radius:12px;
+    padding:1rem;
+    backdrop-filter:blur(10px);
+    box-shadow:0 0 15px rgba(0,234,255,0.1);
+  }
+  .card h3 { color:#00eaff; margin-bottom:0.5rem; font-size:1.1rem; text-shadow:0 0 6px #00eaff; }
+  .card p { color:#ccc; font-size:0.9rem; }
+
+  /* ===== TABLE ===== */
+  table { width:100%; border-collapse: collapse; margin-top:1rem; }
+  th, td { border:1px solid rgba(255,255,255,0.2); padding:0.5rem; text-align:center; }
+  th { background:rgba(0,234,255,0.1); }
+  td { color:#fff; }
+
+  /* ===== RESPONSIVE ===== */
+  @media(max-width:768px){
+    h1 { font-size:1.6rem; }
+    .card h3 { font-size:1rem; }
+    .card p { font-size:0.85rem; }
+  }
+
+    /* ===== ORBIT CANVAS ===== */
+  #orbitCanvas { width:100%; height:300px; background:rgba(0,0,0,0.5); border-radius:12px; margin-bottom:2rem; }
+
+  /* ==============================
+   AI Model Prediction Section
+   ============================== */
+.ai-section {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 0 20px rgba(0, 204, 255, 0.05);
+  padding: 2rem;
+  margin: 3rem auto;
+  max-width: 700px;
+  text-align: center;
+  color: #e0f7ff;
+  transition: all 0.3s ease-in-out;
+}
+
+.ai-section:hover {
+  box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+}
+
+.ai-section h2 {
+  font-size: 1.6rem;
+  color: #00eaff;
+  margin-bottom: 1.2rem;
+  text-shadow: 0 0 8px rgba(0, 234, 255, 0.4);
+}
+
+.ai-section textarea {
+  width: 100%;
+  height: 160px;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: #ffffff;
+  font-family: "Courier New", monospace;
+  resize: vertical;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ai-section textarea:focus {
+  border-color: #00eaff;
+  box-shadow: 0 0 10px rgba(0, 234, 255, 0.3);
+}
+
+.ai-section button {
+  margin-top: 1.2rem;
+  padding: 0.7rem 1.6rem;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #00b4ff, #0077ff);
+  color: white;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.ai-section button:hover {
+  background: linear-gradient(90deg, #00eaff, #00a3ff);
+  transform: scale(1.05);
+}
+
+.ai-section pre {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-top: 1.2rem;
+  text-align: left;
+  font-size: 0.9rem;
+  font-family: "Courier New", monospace;
+  color: #aaf7ff;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Satellite Telemetry Simulator</h1>
+  <p>Upload your satellite telemetry/metadata file to simulate orbit, speed, orientation, and detect anomalies in layman terms.</p>
+
+  <div class="upload-container">
+    <input type="file" id="fileInput" accept=".csv,.json">
+    <button onclick="processFile()">Analyze Data</button>
+  </div>
+
+<section class="ai-section">
+  <h2>AI Model Prediction</h2>
+  <input type="file" id="npyInput" accept=".npy" />
+  <button id="runPredict">Run AI Analysis</button>
+  <pre id="resultOutput"></pre>
+</section>
+
+  <div class="output">
+    <div class="card">
+      <h3>Predicted Position</h3>
+      <p id="position">Lat: --°, Lon: --°</p>
+    </div>
+    <div class="card">
+      <h3>Speed & Orientation</h3>
+      <p id="speedOrient">Speed: -- km/s, Orientation: --°</p>
+    </div>
+    <div class="card">
+      <h3>Anomalies</h3>
+      <p id="anomalies">No anomalies detected.</p>
+    </div>
+  </div>
+
+  <div class="table-container">
+    <h3>Raw Telemetry Preview</h3>
+    <table id="dataTable">
+      <thead>
+        <tr><th>Timestamp</th><th>Temperature(°C)</th><th>Battery(V)</th><th>Solar(W)</th><th>Radiation(µGy/h)</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+      <canvas id="orbitCanvas"></canvas>
+  </div>
+</div>
+
+<script>
+  // ------------------ Orbit Animation ------------------
+  const canvas = document.getElementById("orbitCanvas");
+  const ctx = canvas.getContext("2d");
+  let angle = 0;
+  function resizeCanvas(){
+    canvas.width = canvas.clientWidth * devicePixelRatio;
+    canvas.height = canvas.clientHeight * devicePixelRatio;
+    ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  }
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+
+  function drawOrbit(lat=0, lon=0){
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    ctx.clearRect(0,0,w,h);
+    const cx=w/2, cy=h/2;
+    const rx=w*0.38, ry=h*0.28;
+
+    // Orbit ellipse
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, rx, ry, 0, 0, 2*Math.PI);
+    ctx.strokeStyle = "rgba(0,234,255,0.3)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Earth
+    ctx.beginPath();
+    ctx.arc(cx, cy, 12,0,2*Math.PI);
+    ctx.fillStyle="rgba(20,100,200,0.9)";
+    ctx.fill();
+
+    // Satellite
+    const satX = cx + rx*Math.cos(angle);
+    const satY = cy + ry*Math.sin(angle);
+    ctx.beginPath();
+    ctx.arc(satX,satY,6,0,2*Math.PI);
+    ctx.fillStyle="#fff";
+    ctx.fill();
+
+    ctx.font="11px monospace";
+    ctx.fillStyle="#dbeff6";
+    ctx.fillText(`Lat:${lat.toFixed(2)} Lon:${lon.toFixed(2)}`, Math.min(w-140,satX+12), Math.max(14,satY-6));
+  }
+
+  function animateOrbit(){
+    angle += 0.0001;
+    if(angle>2*Math.PI) angle -= 2*Math.PI;
+    // Example simulation lat/lon values
+    const lat = Math.sin(angle)*45;
+    const lon = Math.cos(angle)*180;
+    drawOrbit(lat, lon);
+    requestAnimationFrame(animateOrbit);
+  }
+  animateOrbit();
+
+  // ------------------ File Processing ------------------
+  function processFile(){
+    const fileInput = document.getElementById("fileInput");
+    if(!fileInput.files.length){ alert("Please upload a file."); return; }
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    reader.onload = function(e){
+      let data;
+      if(file.name.endsWith(".json")){
+        data = JSON.parse(e.target.result);
+      } else if(file.name.endsWith(".csv")){
+        const lines = e.target.result.split("\n").filter(l=>l.trim());
+        const headers = lines[0].split(",");
+        data = lines.slice(1).map(l=>{
+          const obj = {};
+          l.split(",").forEach((v,i)=>obj[headers[i].trim()]=v.trim());
+          return obj;
+        });
+      }
+
+      populateTable(data);
+      simulateTelemetry(data);
+    }
+    reader.readAsText(file);
+  }
+
+  // ------------------ Populate Table ------------------
+  function populateTable(data){
+    const tbody = document.querySelector("#dataTable tbody");
+    tbody.innerHTML = "";
+    data.slice(0,10).forEach(row=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${row.Timestamp||row.time||"--"}</td>
+                      <td>${row.Temperature||"--"}</td>
+                      <td>${row.Battery||"--"}</td>
+                      <td>${row.Solar||"--"}</td>
+                      <td>${row.Radiation||"--"}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ------------------ Simulate telemetry ------------------
+  function simulateTelemetry(data){
+    if(!data.length) return;
+    // Take last telemetry
+    const last = data[data.length-1];
+    const lat = (Math.random()*180-90).toFixed(2);
+    const lon = (Math.random()*360-180).toFixed(2);
+    const speed = (Math.random()*8).toFixed(2); // km/s
+    const orient = (Math.random()*360).toFixed(1);
+
+    document.getElementById("position").textContent = `Lat: ${lat}°, Lon: ${lon}°`;
+    document.getElementById("speedOrient").textContent = `Speed: ${speed} km/s, Orientation: ${orient}°`;
+
+    // Simple anomaly detection
+    const anomalies = [];
+    if(last.Battery && parseFloat(last.Battery)<3.5) anomalies.push("Low Battery");
+    if(last.Temperature && (parseFloat(last.Temperature)>50 || parseFloat(last.Temperature)<-10)) anomalies.push("Temperature out of range");
+    if(last.Radiation && parseFloat(last.Radiation)>10) anomalies.push("High Radiation");
+
+    document.getElementById("anomalies").textContent = anomalies.length ? anomalies.join(", ") : "No anomalies detected.";
+  }
+</script>
+
+<input type="file" id="npyInput" accept=".npy">
+<button id="runPredict">Run AI Analysis</button>
+<pre id="resultOutput"></pre>
+
+<script>
+document.getElementById('runPredict').addEventListener('click', async () => {
+  const fileInput = document.getElementById('npyInput');
+  if (!fileInput.files.length) {
+    alert("Please select a .npy file!");
+    return;
+  }
+
+  const fileName = fileInput.files[0].name;
+
+  // Simulate AI model output (randomized)
+  const randomAnomalies = Math.floor(Math.random() * 4); // 0–3 anomalies
+  const totalFeatures = 25;
+  const anomalyIndexes = Array.from({ length: randomAnomalies }, () =>
+    "feature" + (Math.floor(Math.random() * totalFeatures) + 1)
+  );
+
+  // Generate random per-feature status
+  const coreParams = {};
+  for (let i = 1; i <= totalFeatures; i++) {
+    coreParams[`feature${i}`] = anomalyIndexes.includes(`feature${i}`)
+      ? "anomaly_detected"
+      : "normal";
+  }
+
+  // Random graphs
+  const graphs = {};
+  for (let i = 1; i <= totalFeatures; i++) {
+    graphs[`feature${i}`] = Array.from({ length: 5 }, () =>
+      parseFloat((Math.random() * 0.05).toFixed(3))
+    );
+  }
+
+  // Random debug values
+  const debug = {
+    per_sequence_mse_sample: Array(10).fill(0).map(() => Math.random().toFixed(5)),
+    per_feature_mse: Array(totalFeatures).fill(0).map(() => Math.random().toFixed(6)),
+    num_sequences: 5
+  };
+
+  // Generate main JSON result
+  const result = {
+    status: "success",
+    timestamp: new Date().toISOString(),
+    file_name: fileName,
+    num_anomalies: randomAnomalies,
+    threshold: parseFloat(Math.random().toFixed(6)),
+    anomalous_features: anomalyIndexes,
+    core_parameters: coreParams,
+    health_overview: {
+      status: randomAnomalies === 0 ? "stable" : randomAnomalies <= 2 ? "minor issues" : "critical",
+      estimated_life_remaining: randomAnomalies === 0 ? "normal" : "under observation"
+    },
+    collision_debris: {
+      warning: randomAnomalies > 1 ? "potential debris risk" : "none",
+      details: {}
+    },
+    graphs: graphs,
+    debug: debug,
+    readable_summary: `The AI system analyzed telemetry data from ${fileName}. 
+Detected ${randomAnomalies} anomalies — ${anomalyIndexes.length ? anomalyIndexes.join(", ") : "none"}. 
+Overall satellite health is ${randomAnomalies === 0 ? "stable" : "affected by minor/critical anomalies"}.`
+  };
+
+  // Display as formatted JSON
+  document.getElementById('resultOutput').textContent = JSON.stringify(result, null, 2);
+});
+</script>
+
+
+</body>
+</html>

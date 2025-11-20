@@ -1,1 +1,236 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Satellite Health Monitoring System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ===== GLOBAL ===== */
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Rajdhani', sans-serif; }
+    body, html { height:100%; width:100%; overflow-x:hidden; background:black; color:white; }
 
+    /* ===== VIDEO BACKGROUND ===== */
+    #bg-video {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: -2;
+      opacity: 0.35; /* slightly dimmed for readability */
+    }
+
+    /* ===== CONTAINER ===== */
+    .container {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    h1 {
+      font-size: 2.4rem; /* slightly smaller */
+      font-weight: 600;
+      margin-bottom: 0.8rem;
+      text-shadow: 0 0 12px rgba(0,204,255,0.7), 0 0 24px rgba(0,204,255,0.4);
+    }
+
+    p {
+      font-size: 1rem; /* slightly smaller */
+      color: #ccc;
+      max-width: 650px;
+      margin: 0 auto 2rem auto;
+      line-height: 1.5;
+    }
+
+    /* ===== USPs CARDS ===== */
+    .usps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px,1fr));
+      gap: 1rem;
+      width: 100%;
+      max-width: 900px;
+      margin-bottom: 2rem;
+    }
+
+    .usp-card {
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 1rem 1.2rem;
+      box-shadow: 0 0 25px rgba(0,255,255,0.05);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+
+    .usp-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 35px rgba(0,255,255,0.2);
+    }
+
+    .usp-card h3 {
+      color: #00ccff;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 6px rgba(0,204,255,0.6);
+    }
+
+    .usp-card p { 
+      color: #ccc; 
+      font-size: 0.9rem; 
+      line-height: 1.4;
+    }
+
+    /* ===== BUTTONS ===== */
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      justify-content: center;
+    }
+
+    .buttons a {
+      padding: 0.65rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.3s;
+      text-decoration: none;
+      color: white;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 0 10px rgba(0,255,255,0.2);
+    }
+
+    .buttons a:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 0 20px rgba(0,255,255,0.4);
+    }
+
+    .explore { background: #007bff; }
+    .simulator { background: #ffc107; color: #000; }
+    .position { background: #28a745; }
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:768px){
+      h1 { font-size: 2rem; }
+      p { font-size: 0.95rem; }
+      .usp-card h3 { font-size: 1rem; }
+      .usp-card p { font-size: 0.85rem; }
+      .buttons a { font-size: 0.9rem; padding: 0.55rem 1.2rem; }
+    }
+
+    .documents {
+      margin-top: 3rem;
+      text-align: center;
+      color: #fff;
+    }
+    .doc-cards {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+    .doc-card {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      width: 300px;
+      padding: 1.5rem;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 0 10px rgba(0, 255, 255, 0.05);
+    }
+    .doc-card h3 {
+      color: #00ccff;
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+    .doc-card p {
+      color: #bbb;
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+    }
+    .btn-purple {
+      display: inline-block;
+      padding: 0.6rem 1.2rem;
+      background: #6f42c1;
+      color: white;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: 0.3s;
+    }
+    .btn-purple:hover {
+      background: #531d9b;
+    }
+  </style>
+</head>
+<body>
+  <!-- Background Video -->
+  <video autoplay muted loop id="bg-video">
+  <source src="{% static 'images/background.mp4' %}" type="video/mp4"/>
+</video>
+
+  <div class="container">
+    <!-- TITLE & OVERVIEW -->
+    <h1>Satellite Health Monitoring System</h1>
+    <p>Our system monitors satellites in real-time, detects anomalies, tracks orbital parameters, and ensures optimal performance for ocean, climate, and space observation missions.</p>
+
+    <!-- USPs -->
+    <div class="usps">
+      <div class="usp-card">
+        <h3>Real-Time Telemetry</h3>
+        <p>Continuous updates of temperature, battery, solar power, and radiation levels.</p>
+      </div>
+      <div class="usp-card">
+        <h3>Orbit Tracking</h3>
+        <p>Visualize satellite orbits and position data on an interactive Earth model.</p>
+      </div>
+      <div class="usp-card">
+        <h3>Anomaly Detection</h3>
+        <p>Receive alerts for low battery, debris, or communication issues.</p>
+      </div>
+      <div class="usp-card">
+        <h3>Easy Simulator</h3>
+        <p>Simulate satellite behavior in different conditions and test responses.</p>
+      </div>
+    </div>
+
+    <!-- BUTTONS -->
+  <div class="buttons">
+    <a href="{% url 'dashboard' %}" class="explore">🚀 Explore Dashboard</a>
+    <a href="{% url 'simulator' %}" class="simulator">💻 Open Simulator</a>
+    <a href="https://platform.leolabs.space/visualizations/leo" class="position" target="_blank">🛰 Real-Time Position</a>
+    <a href="{% static 'index1.html' %}" class="simulator">🚀 Collision Orbit Sim</a>
+</div>
+
+<!-- 📄 Documents Section -->
+    <section class="documents">
+      <h2>📜 Global Forum Documents</h2>
+      <div class="doc-cards">
+        <div class="doc-card">
+          <h3>Data Confidentiality & Forum Regulations</h3>
+          <p>Guidelines and governance framework for international satellite data sharing and confidentiality.</p>
+          <a href="{% static 'pdf/data_confidentiality.pdf' %}" target="_blank" class="btn-purple">View / Download PDF</a>
+        </div>
+
+        <div class="doc-card">
+          <h3>Technical Report – AI Satellite Health Monitoring</h3>
+          <p>Comprehensive technical documentation detailing Team NebriX’s AI-driven satellite health monitoring framework.</p>
+          <a href="{% static 'pdf/technical_report.pdf' %}" target="_blank" class="btn-purple">View / Download PDF</a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  </div>
+</body>
+</html>
